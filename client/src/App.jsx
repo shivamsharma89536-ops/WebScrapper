@@ -38,6 +38,7 @@ function App() {
   const [runs, setRuns] = useState([])
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
+  const [isFormOpen, setIsFormOpen] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -112,6 +113,7 @@ function App() {
       })
       setForm(emptyForm)
       setEditingId(null)
+      setIsFormOpen(false)
       setMessage('Source saved')
       await loadDashboard()
     } catch (saveError) {
@@ -121,6 +123,7 @@ function App() {
 
   function editSource(source) {
     setEditingId(source._id)
+    setIsFormOpen(true)
     setForm({
       name: source.name,
       url: source.url,
@@ -149,6 +152,7 @@ function App() {
       if (editingId === id) {
         setEditingId(null)
         setForm(emptyForm)
+        setIsFormOpen(false)
       }
       setMessage('Source deleted')
       await loadDashboard()
@@ -220,9 +224,17 @@ function App() {
       {message && <p className="success">{message}</p>}
       {error && <p className="error">{error}</p>}
 
-      <section className="card">
-        <h2>{editingId ? 'Edit source' : 'Add source'}</h2>
-        <form onSubmit={createSource} className="source-form">
+      <div className="dashboard-layout">
+        <div className="dashboard-content">
+        <section className="card source-form-card">
+          <div className="section-heading">
+            <div>
+              <h2>{editingId ? 'Edit source' : 'Sources'}</h2>
+              <p className="section-help">Manage websites and feeds collected by your dashboard.</p>
+            </div>
+            {!isFormOpen && <button type="button" onClick={() => setIsFormOpen(true)}>+ Add source</button>}
+          </div>
+          {isFormOpen && <form onSubmit={createSource} className="source-form">
           <input placeholder="Source name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
           <input type="url" placeholder="https://example.com" value={form.url} onChange={(event) => setForm({ ...form, url: event.target.value })} required />
           <select value={form.category} onChange={(event) => setForm({ ...form, category: event.target.value })}>
@@ -250,62 +262,83 @@ function App() {
           ))}
           {form.mode !== 'rss' && <button type="button" onClick={() => setForm({ ...form, fields: [...form.fields, form.mode === 'css' ? { name: '', selector: '', attribute: 'text' } : { name: '', path: '' }] })}>Add field</button>}
           <button type="submit">{editingId ? 'Update source' : 'Save source'}</button>
-          {editingId && <button type="button" onClick={() => { setEditingId(null); setForm(emptyForm) }}>Cancel edit</button>}
-        </form>
-      </section>
+          {editingId && <button type="button" onClick={() => { setEditingId(null); setForm(emptyForm); setIsFormOpen(false) }}>Cancel edit</button>}
+          </form>}
+        </section>
 
-      <section className="card">
-        <h2>Sources</h2>
-        <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
-          <option value="">All categories</option>
-          <option value="placement">Placement / recruitment</option>
-          <option value="government-job">Government jobs</option>
-          <option value="news">Daily news</option>
-        </select>
-        {sources.map((source) => (
-          <div className="source-row" key={source._id}>
-            <span><strong>{source.name}</strong> ({source.category})<br />{source.url}</span>
-            <div className="source-actions">
-              <button onClick={() => scrapeSource(source._id)}>Scrape now</button>
-              <button onClick={() => editSource(source)}>Edit</button>
-              <button onClick={() => deleteSource(source._id)}>Delete</button>
+        <section className="card">
+          <div className="section-heading">
+            <div>
+              <h2>Saved sources</h2>
+              <p className="section-help">Each source has its own collected data area.</p>
             </div>
+            <select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+              <option value="">All categories</option>
+              <option value="placement">Placement / recruitment</option>
+              <option value="government-job">Government jobs</option>
+              <option value="news">Daily news</option>
+            </select>
           </div>
-        ))}
-        {sources.length === 0 && <p>No sources saved yet.</p>}
-      </section>
-
-      <section className="card">
-        <h2>Collected items ({items.length})</h2>
-        {items.map((item) => (
-          <div key={item._id} className="item">
-            {isNewItem(item) && <span className="new-label">New</span>}
-            <pre>{JSON.stringify(item.data, null, 2)}</pre>
+          <div className="source-grid">
+            {sources.map((source) => {
+              const sourceItems = items.filter((item) => {
+                const itemSourceId = item.source?._id || item.source
+                return String(itemSourceId) === String(source._id)
+              })
+              return (
+                <article className="source-card" key={source._id}>
+                  <div className="source-card-header">
+                    <div>
+                      <h3>{source.name}</h3>
+                      <span className="category-badge">{source.category}</span>
+                    </div>
+                    <span className="item-count">{sourceItems.length} item(s)</span>
+                  </div>
+                  <a href={source.url} target="_blank" rel="noreferrer" className="source-url">{source.url}</a>
+                  <div className="source-actions">
+                    <button onClick={() => scrapeSource(source._id)}>Scrape now</button>
+                    <button className="secondary-button" onClick={() => editSource(source)}>Edit</button>
+                    <button className="danger-button" onClick={() => deleteSource(source._id)}>Delete</button>
+                  </div>
+                  <div className="source-items">
+                    {sourceItems.length === 0 && <p className="empty-state">No data collected from this source yet.</p>}
+                    {sourceItems.map((item) => (
+                      <div key={item._id} className="item">
+                        {isNewItem(item) && <span className="new-label">New</span>}
+                        <pre>{JSON.stringify(item.data, null, 2)}</pre>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              )
+            })}
+            {sources.length === 0 && <p className="empty-state">No sources saved yet. Select “Add source” to begin.</p>}
           </div>
-        ))}
-      </section>
+        </section>
 
-      <section className="card">
-        <h2>Recent runs</h2>
-        {runs.map((run) => <p key={run._id}>{run.status} — found {run.found}, new {run.newItems}</p>)}
-      </section>
+        <section className="card">
+          <h2>Recent runs</h2>
+          {runs.map((run) => <p key={run._id}>{run.status} — found {run.found}, new {run.newItems}</p>)}
+        </section>
+        </div>
 
-      <aside className="chat-widget">
-        <h2>Data assistant</h2>
-        <p className="chat-help">Ask about saved items or source settings.</p>
-        {chatAnswer && <div className="chat-answer">{chatAnswer}</div>}
-        <form onSubmit={askAssistant}>
-          <input
-            placeholder="Summarize placement jobs..."
-            value={chatMessage}
-            onChange={(event) => setChatMessage(event.target.value)}
-            maxLength="1000"
-          />
-          <button type="submit" disabled={chatLoading}>
-            {chatLoading ? 'Asking...' : 'Ask'}
-          </button>
-        </form>
-      </aside>
+        <aside className="chat-widget">
+          <h2>Data assistant</h2>
+          <p className="chat-help">Ask about saved items or source settings.</p>
+          {chatAnswer && <div className="chat-answer">{chatAnswer}</div>}
+          <form onSubmit={askAssistant}>
+            <input
+              placeholder="Summarize placement jobs..."
+              value={chatMessage}
+              onChange={(event) => setChatMessage(event.target.value)}
+              maxLength="1000"
+            />
+            <button type="submit" disabled={chatLoading}>
+              {chatLoading ? 'Asking...' : 'Ask'}
+            </button>
+          </form>
+        </aside>
+      </div>
     </main>
   )
 }
