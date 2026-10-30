@@ -39,6 +39,7 @@ function App() {
   const [form, setForm] = useState(emptyForm)
   const [editingId, setEditingId] = useState(null)
   const [isFormOpen, setIsFormOpen] = useState(false)
+  const [showAllRuns, setShowAllRuns] = useState(false)
   const [categoryFilter, setCategoryFilter] = useState('')
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -232,7 +233,12 @@ function App() {
               <h2>{editingId ? 'Edit source' : 'Sources'}</h2>
               <p className="section-help">Manage websites and feeds collected by your dashboard.</p>
             </div>
-            {!isFormOpen && <button type="button" onClick={() => setIsFormOpen(true)}>+ Add source</button>}
+            <button
+              type="button"
+              onClick={() => setIsFormOpen(!isFormOpen)}
+            >
+              {isFormOpen ? 'Collapse form' : '+ Add source'}
+            </button>
           </div>
           {isFormOpen && <form onSubmit={createSource} className="source-form">
           <input placeholder="Source name" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} required />
@@ -317,8 +323,24 @@ function App() {
         </section>
 
         <section className="card">
-          <h2>Recent runs</h2>
-          {runs.map((run) => <p key={run._id}>{run.status} — found {run.found}, new {run.newItems}</p>)}
+          <div className="section-heading">
+            <div>
+              <h2>Recent runs</h2>
+              <p className="section-help">The latest scrape activity is shown first.</p>
+            </div>
+            {runs.length > 3 && (
+              <button type="button" className="secondary-button" onClick={() => setShowAllRuns(!showAllRuns)}>
+                {showAllRuns ? 'Show less' : `Show all (${runs.length})`}
+              </button>
+            )}
+          </div>
+          {(showAllRuns ? runs : runs.slice(0, 3)).map((run) => (
+            <div className="run-row" key={run._id}>
+              <span className={`run-status ${run.status}`}>{run.status}</span>
+              <span>Found {run.found}, new {run.newItems}</span>
+            </div>
+          ))}
+          {runs.length === 0 && <p className="empty-state">No scrape runs recorded yet.</p>}
         </section>
         </div>
 
