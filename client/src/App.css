@@ -1,0 +1,22 @@
+:root { font-family: Arial, sans-serif; color: #172033; background: #f3f5f8; }
+body { margin: 0; }
+main { max-width: 1000px; margin: 0 auto; padding: 24px; }
+header { display: flex; justify-content: space-between; align-items: center; }
+.card { background: white; border-radius: 8px; padding: 20px; margin: 16px 0; box-shadow: 0 2px 8px #0001; }
+.login { max-width: 420px; margin-top: 80px; }
+form { display: grid; gap: 10px; }
+input, button { font: inherit; padding: 10px; border: 1px solid #ccd2dc; border-radius: 4px; }
+button { cursor: pointer; background: #2563eb; color: white; border: 0; }
+.field-row, .source-row { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
+.field-row input { flex: 1; }
+.source-row { justify-content: space-between; border-top: 1px solid #eee; padding-top: 10px; }
+.source-actions { display: flex; gap: 8px; }
+.error { color: #b42318; }
+.success { color: #067647; }
+pre { background: #f5f7fa; padding: 10px; overflow-x: auto; }
+.item { position: relative; }
+.new-label { color: #067647; font-weight: bold; }
+.chat-widget { position: fixed; right: 20px; bottom: 20px; width: 320px; background: white; padding: 16px; border-radius: 8px; box-shadow: 0 4px 18px #0003; }
+.chat-widget h2 { margin: 0; font-size: 1.1rem; }
+.chat-help { font-size: 0.85rem; color: #667085; }
+.chat-answer { white-space: pre-wrap; max-height: 220px; overflow-y: auto; margin: 10px 0; padding: 10px; background: #f5f7fa; }
